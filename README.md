@@ -19,6 +19,39 @@ npm start
 
 Le serveur démarre sur http://localhost:3000
 
+## Déploiement (serveur Linux)
+
+Variables utiles:
+- PORT: port HTTP (ex: 3001)
+- ROOM_TTL_MS: durée d’inactivité avant suppression de la salle (ms). Par défaut 1800000 (30 min)
+- LOG_FILE: chemin d’un fichier de log (ex: /var/log/super-morpion.log)
+
+Exemples:
+
+Service simple (tmux/screen/nohup)
+
+```
+PORT=3001 LOG_FILE=/var/log/super-morpion.log node server.js
+```
+
+Avec pm2 (recommandé)
+
+```
+pm2 start server.js --name super-morpion \
+  --time \
+  --env PORT=3001,ROOM_TTL_MS=1800000,LOG_FILE=/var/log/super-morpion.log
+pm2 logs super-morpion
+```
+
+Logs
+- Sans LOG_FILE: logs sur stdout/stderr (visible via pm2 logs ou journalctl selon votre superviseur)
+- Avec LOG_FILE: logs écrits dans le fichier choisi (créé/appended). Exemple de lignes:
+```
+[2025-10-02T14:00:00.000Z] Server listening on http://0.0.0.0:3001
+[2025-10-02T14:00:10.000Z] socket connect {"id":"...","addr":"..."}
+[2025-10-02T14:00:15.000Z] createRoom ok {"roomId":"ABCD12","role":"X","by":"..."}
+```
+
 ## Tester à deux joueurs (local ou réseau)
 
 - Ouvrez deux onglets/navigateurs:

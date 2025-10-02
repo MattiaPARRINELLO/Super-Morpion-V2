@@ -4,7 +4,7 @@
   "description": "Super Morpion en ligne avec Node.js et Socket.IO",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "mkdir -p logs && LOG_FILE=logs/server.log node server.js",
     "dev": "node server.js"
   },
   "author": "",

@@ -10,6 +10,19 @@ const io = new Server(server, {
     cors: { origin: '*' }
 });
 
+// Simple timestamped logging (console and optional file)
+const LOG_FILE = process.env.LOG_FILE;
+let logStream = null;
+if (LOG_FILE) {
+    try { logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' }); }
+    catch (e) { console.error('Cannot open log file', LOG_FILE, e); }
+}
+function log(...args) {
+    const line = `[${new Date().toISOString()}] ` + args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+    console.log(line);
+    if (logStream) try { logStream.write(line + '\n'); } catch {}
+}
+
 // Serve static files
 app.use(express.static(path.join(__dirname)));
 
@@ -159,8 +172,10 @@ function getRoomsList() {
 }
 
 io.on('connection', (socket) => {
+    log('socket connect', { id: socket.id, addr: socket.handshake.address });
     socket.on('createRoom', ({ roomId, nickname }, cb) => {
         try {
+            log('createRoom request', { roomId, nickname });
             roomId = (roomId || '').trim().toUpperCase();
             if (!roomId) roomId = Math.random().toString(36).slice(2, 8).toUpperCase();
             ensureRoom(roomId);
@@ -175,15 +190,18 @@ io.on('connection', (socket) => {
             touch(roomId);
             saveRooms();
             cb({ ok: true, roomId, role: 'X', state: room.state });
+            log('createRoom ok', { roomId, role: 'X', by: socket.id });
             io.in(roomId).emit('roomInfo', buildRoomInfo(roomId));
             io.emit('roomsUpdated', getRoomsList());
         } catch (e) {
+            log('createRoom error', { message: e.message });
             cb({ ok: false, error: 'Erreur création salle.' });
         }
     });
 
     socket.on('joinRoom', ({ roomId, nickname }, cb) => {
         try {
+            log('joinRoom request', { roomId, nickname });
             roomId = (roomId || '').trim().toUpperCase();
             ensureRoom(roomId);
             const room = rooms[roomId];
@@ -201,10 +219,12 @@ io.on('connection', (socket) => {
             touch(roomId);
             saveRooms();
             cb({ ok: true, roomId, role, state: room.state });
+            log('joinRoom ok', { roomId, role, by: socket.id });
             socket.to(roomId).emit('playerJoined', { role, nickname: room.nicknames[socket.id] });
             io.in(roomId).emit('roomInfo', buildRoomInfo(roomId));
             io.emit('roomsUpdated', getRoomsList());
         } catch (e) {
+            log('joinRoom error', { message: e.message });
             cb({ ok: false, error: 'Erreur rejoindre salle.' });
         }
     });
@@ -217,11 +237,12 @@ io.on('connection', (socket) => {
         touch(roomId);
         const role = roomPlayerOf(socket, room);
         cb({ ok: true, roomId, role, state: room.state });
+        log('resumeRoom', { roomId, role, by: socket.id });
         socket.emit('roomInfo', buildRoomInfo(roomId));
     });
 
     socket.on('playMove', ({ roomId, bigIndex, smallIndex, role }, cb) => {
-        const room = rooms[(roomId || '').toUpperCase()];
+    const room = rooms[(roomId || '').toUpperCase()];
         if (!room) return cb({ ok: false, error: 'Salle introuvable.' });
         const player = roomPlayerOf(socket, room);
         if (!player || player !== role) return cb({ ok: false, error: 'Non autorisé.' });
@@ -283,6 +304,7 @@ io.on('connection', (socket) => {
         io.in(roomId).emit('stateUpdate', { state: rooms[roomId].state, meta: { lastMove: { bigIndex, smallIndex, role }, winner, draw } });
         io.in(roomId).emit('roomInfo', buildRoomInfo(roomId));
         cb({ ok: true });
+        log('playMove', { roomId, bigIndex, smallIndex, role });
     });
 
     // Peer cursor sharing within a room
@@ -292,10 +314,11 @@ io.on('connection', (socket) => {
         touch(roomId);
         // broadcast to others in the room
         socket.to(roomId).emit('peerCursor', { bigIndex, smallIndex });
+        log('cursorMove', { roomId, bigIndex, smallIndex, by: socket.id });
     });
 
     socket.on('leaveRoom', ({ roomId }) => {
-        const room = rooms[(roomId || '').toUpperCase()];
+    const room = rooms[(roomId || '').toUpperCase()];
         if (!room) return;
         if (room.players.X === socket.id) room.players.X = null;
         if (room.players.O === socket.id) room.players.O = null;
@@ -306,10 +329,12 @@ io.on('connection', (socket) => {
         io.in(roomId).emit('playerLeft', {});
         io.in(roomId).emit('roomInfo', buildRoomInfo(roomId));
         io.emit('roomsUpdated', getRoomsList());
+        log('leaveRoom', { roomId, by: socket.id });
     });
 
     socket.on('disconnect', () => {
         // Cleanup references; keep state for resume
+        log('socket disconnect', { id: socket.id });
         for (const [roomId, room] of Object.entries(rooms)) {
             let changed = false;
             if (room.players.X === socket.id) { room.players.X = null; changed = true; }
@@ -354,6 +379,15 @@ setInterval(() => {
 }, 60 * 1000);
 
 const PORT = process.env.PORT || 3000;
+server.on('error', (err) => {
+    log('server error', { message: err.message, code: err.code, stack: err.stack });
+});
+process.on('uncaughtException', (err) => {
+    log('uncaughtException', { message: err.message, stack: err.stack });
+});
+process.on('unhandledRejection', (reason) => {
+    log('unhandledRejection', { reason: reason && reason.message ? reason.message : String(reason) });
+});
 server.listen(PORT, () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
+    log(`Server listening on http://0.0.0.0:${PORT}`);
 });
