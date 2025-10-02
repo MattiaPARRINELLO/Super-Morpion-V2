@@ -27,7 +27,17 @@ let state = {
 };
 
 function connectSocket() {
-    socket = io('/', { transports: ['websocket', 'polling'] });
+    // Force polling to be proxy-friendly if WebSockets are blocked; enable robust reconnection
+    socket = io('/', {
+        transports: ['polling'],
+        upgrade: false,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 2000,
+        timeout: 10000,
+        path: '/socket.io'
+    });
     const statusEl = document.getElementById('connection-status');
 
     socket.on('connect', () => {
@@ -61,6 +71,11 @@ function connectSocket() {
 
     socket.on('disconnect', () => {
         statusEl.textContent = 'Déconnecté. Reconnexion…';
+    });
+
+    socket.on('connect_error', (err) => {
+        const msg = (err && err.message) ? err.message : 'Erreur de connexion';
+        statusEl.textContent = `Erreur: ${msg}`;
     });
 
     socket.on('stateUpdate', ({ state: s, meta }) => {
