@@ -14,12 +14,59 @@ document.addEventListener("DOMContentLoaded", function () {
             <p>Tour : <span id="turn">X</span></p>
         </div>
         <button id="toggle-theme">Changer le thème</button>
+        <div class="online-controls">
+            <div class="row">
+                <input id="nickname" type="text" placeholder="Pseudo" />
+                <input id="room-id" type="text" placeholder="Code Salle" disabled />
+            </div>
+            <div class="row">
+                <button id="create-room">Créer une salle</button>
+                <button id="join-room">Rejoindre</button>
+                <button id="copy-link" disabled>Copier le lien</button>
+                <button id="leave-room" disabled>Quitter</button>
+            </div>
+            <p id="connection-status">Hors ligne</p>
+            <div class="room-info">
+                <p>Salle: <strong id="ui-room">—</strong></p>
+                <p>Moi: <strong id="ui-me">—</strong></p>
+                <p>Adversaire: <strong id="ui-opponent">—</strong></p>
+                <p>Nettoyage dans: <strong id="ui-ttl">—</strong></p>
+            </div>
+            <div class="rooms-panel">
+                <h3>Salles actives</h3>
+                <table class="rooms-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Joueur X</th>
+                            <th>Joueur O</th>
+                            <th>Activité</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rooms-tbody">
+                        <tr><td colspan="5">Chargement…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     `;
     container.appendChild(header);
 
-    // Créer la zone de jeu
+    // Zone de notifications/toasts
+    const toastContainer = document.createElement('div');
+    toastContainer.classList.add('toast-container');
+    container.appendChild(toastContainer);
+
+    // Créer la zone de jeu (masquée tant qu'on n'est pas dans une salle)
     const gameContainer = document.createElement('div');
     gameContainer.classList.add('game');
+    gameContainer.classList.add('hidden');
+
+    const emptyState = document.createElement('div');
+    emptyState.classList.add('empty-state');
+    emptyState.innerHTML = `<p>Rejoignez ou créez une salle pour afficher le plateau.</p>`;
+    container.appendChild(emptyState);
 
     // Créer la grille principale
     const board = document.createElement('div');

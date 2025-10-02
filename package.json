@@ -1,0 +1,16 @@
+{
+  "name": "super-morpion-v2",
+  "version": "1.0.0",
+  "description": "Super Morpion en ligne avec Node.js et Socket.IO",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
