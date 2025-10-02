@@ -20,7 +20,7 @@ if (LOG_FILE) {
 function log(...args) {
     const line = `[${new Date().toISOString()}] ` + args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
     console.log(line);
-    if (logStream) try { logStream.write(line + '\n'); } catch {}
+    if (logStream) try { logStream.write(line + '\n'); } catch { }
 }
 
 // Serve static files
@@ -242,7 +242,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('playMove', ({ roomId, bigIndex, smallIndex, role }, cb) => {
-    const room = rooms[(roomId || '').toUpperCase()];
+        const room = rooms[(roomId || '').toUpperCase()];
         if (!room) return cb({ ok: false, error: 'Salle introuvable.' });
         const player = roomPlayerOf(socket, room);
         if (!player || player !== role) return cb({ ok: false, error: 'Non autorisé.' });
@@ -318,7 +318,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('leaveRoom', ({ roomId }) => {
-    const room = rooms[(roomId || '').toUpperCase()];
+        const room = rooms[(roomId || '').toUpperCase()];
         if (!room) return;
         if (room.players.X === socket.id) room.players.X = null;
         if (room.players.O === socket.id) room.players.O = null;
