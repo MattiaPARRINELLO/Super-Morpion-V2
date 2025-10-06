@@ -173,10 +173,11 @@ body.dark-mode button:hover {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 10px;
-  width: 600px;
-  height: 600px;
-  margin: 10px;
+  gap: clamp(4px, 1.2vw, 10px);
+  width: min(92vw, 680px);
+  aspect-ratio: 1 / 1;
+  height: auto;
+  margin: 10px auto;
   background-color: #fff;
   border: 2px solid #ccc;
   border-radius: 8px;
@@ -218,18 +219,18 @@ body:not(.dark-mode) .cell:hover {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 5px;
+  gap: clamp(2px, 0.8vw, 6px);
   width: 100%;
   height: 100%;
 }
 
 .small-board .cell {
-  width: 60px;
-  height: 60px;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1.5em;
+  font-size: clamp(1rem, 2.8vw, 1.5rem);
   cursor: pointer;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
@@ -248,6 +249,16 @@ body:not(.dark-mode) .small-board .cell:hover {
   background-color: #c2c2c2;
 }
 
+/* Responsive display for a won big cell */
+.big-winner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Use clamp to keep sizes reasonable: min 2.5rem, scales with viewport, max 8rem */
+  font-size: clamp(2.5rem, 8vw, 7rem);
+  line-height: 1;
+}
+
 .game-info {
   width: 45%;
   padding: 20px;
@@ -261,14 +272,30 @@ body.dark-mode .game-info {
   box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
 }
 
+/* Rooms table becomes horizontally scrollable on small screens */
+.rooms-panel { width: 100%; overflow-x: auto; }
+.rooms-table { min-width: 560px; }
+
+@media (max-width: 900px) {
+  header h1 { font-size: 2rem; }
+  .scoreboard p { font-size: 1em; }
+  .online-controls .row { flex-wrap: wrap; }
+}
+
 @media (max-width: 768px) {
   .game {
     flex-direction: column;
     align-items: center;
   }
+  .online-controls input { width: min(85vw, 360px); }
+  .online-controls .row { justify-content: center; }
+  button { padding: 10px 14px; }
+}
 
-  .board {
-    width: 100%;
-    height: auto;
-  }
+@media (max-width: 480px) {
+  header h1 { font-size: 1.6rem; }
+  .board { width: 94vw; }
+  .online-controls input { width: 100%; }
+  .online-controls .row { gap: 6px; }
+  .rooms-table { font-size: 0.9em; }
 }

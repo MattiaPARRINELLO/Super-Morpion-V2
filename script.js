@@ -177,11 +177,13 @@ function drawBoards() {
     state.bigBoard.forEach((winner, bigIndex) => {
         const big = bigCells[bigIndex];
         if (winner === 'X' || winner === 'O') {
-            // Replace content with winner emote
+            // Show a large winner emote using CSS-controlled sizing
+            big.classList.add('big-winner');
+            big.style.fontSize = '';
             big.innerHTML = winner === 'X' ? element.emoteX : element.emoteO;
-            const cellHeight = big.offsetHeight;
-            big.style.fontSize = Math.max(24, cellHeight - 50) + 'px';
         } else {
+            big.classList.remove('big-winner');
+            big.style.fontSize = '';
             // Ensure small-board exists and has 9 cells
             let sb = big.querySelector('.small-board');
             if (!sb) {
